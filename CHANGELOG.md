@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.1
+
+* Security & Privacy Enhancements: Added production logging protection (`allowProductionLogging`) and expanded sensitive data masking in release mode.
+* Improved type safety in `ResponseParser` and model parsing diagnostics.
+* Performance optimizations for memory caching and direct-to-disk streaming downloads.
+
 ## 1.0.0
 
 * Initial release of **EasyApiKit**.
