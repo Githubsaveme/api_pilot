@@ -5,27 +5,37 @@ import '../errors/api_error.dart';
 import '../models/api_request.dart';
 import '../models/api_response.dart';
 
-/// Formatted logger for EasyApiKit operations with privacy protection.
+/// Formatted logger for EasyApiKit operations with strict production security.
 class ApiLogger {
   final bool enabled;
+  final bool allowProductionLogging;
   final ApiLogLevel logLevel;
   final List<String> sensitiveHeaders;
   final List<String> sensitiveBodyKeys;
 
   ApiLogger({
     required this.enabled,
+    this.allowProductionLogging = false,
     required this.logLevel,
     required this.sensitiveHeaders,
     required this.sensitiveBodyKeys,
   });
 
+  /// `true` if logging is active and allowed under current environment mode.
+  bool get isLoggingAllowed {
+    if (!enabled || logLevel == ApiLogLevel.none) return false;
+    // In production/release builds, block logs by default for security
+    if (kReleaseMode && !allowProductionLogging) return false;
+    return true;
+  }
+
   /// Logs an outgoing HTTP request.
   void logRequest(ApiRequest request) {
-    if (!enabled || logLevel == ApiLogLevel.none) return;
+    if (!isLoggingAllowed) return;
 
     final buffer = StringBuffer();
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    buffer.writeln('EASY API KIT - REQUEST');
+    buffer.writeln('EASY API KIT - REQUEST [${kDebugMode ? "DEBUG" : "PROD"}]');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('ID       : ${request.id}');
     buffer.writeln('METHOD   : ${request.method.name}');
@@ -41,7 +51,8 @@ class ApiLogger {
 
     if (logLevel == ApiLogLevel.body || logLevel == ApiLogLevel.full) {
       if (request.queryParameters != null && request.queryParameters!.isNotEmpty) {
-        buffer.writeln('QUERY    : ${_prettyPrintJson(request.queryParameters)}');
+        final maskedQueryParams = _maskBody(request.queryParameters);
+        buffer.writeln('QUERY    : ${_prettyPrintJson(maskedQueryParams)}');
       }
 
       if (request.data != null) {
@@ -63,11 +74,11 @@ class ApiLogger {
 
   /// Logs an incoming HTTP response.
   void logResponse(ApiResponse response) {
-    if (!enabled || logLevel == ApiLogLevel.none) return;
+    if (!isLoggingAllowed) return;
 
     final buffer = StringBuffer();
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    buffer.writeln('EASY API KIT - RESPONSE');
+    buffer.writeln('EASY API KIT - RESPONSE [${kDebugMode ? "DEBUG" : "PROD"}]');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('ID       : ${response.requestId}');
     buffer.writeln('STATUS   : ${response.statusCode ?? "-"} ${response.statusMessage ?? ""}');
@@ -84,8 +95,12 @@ class ApiLogger {
 
     if (logLevel == ApiLogLevel.body || logLevel == ApiLogLevel.full) {
       if (response.rawData != null) {
-        final maskedData = _maskBody(response.rawData);
-        buffer.writeln('BODY     : ${_prettyPrintJson(maskedData)}');
+        if (kReleaseMode) {
+          buffer.writeln('BODY     : *** MASKED IN PRODUCTION ***');
+        } else {
+          final maskedData = _maskBody(response.rawData);
+          buffer.writeln('BODY     : ${_prettyPrintJson(maskedData)}');
+        }
       }
     }
 
@@ -95,7 +110,7 @@ class ApiLogger {
 
   /// Logs an API or network error.
   void logError(ApiError error) {
-    if (!enabled || logLevel == ApiLogLevel.none) return;
+    if (!isLoggingAllowed) return;
     _print(error.toFormattedString());
   }
 
@@ -104,7 +119,13 @@ class ApiLogger {
     final sensitiveLower = sensitiveHeaders.map((e) => e.toLowerCase()).toSet();
 
     headers.forEach((key, value) {
-      if (sensitiveLower.contains(key.toLowerCase())) {
+      final k = key.toLowerCase();
+      if (sensitiveLower.contains(k) ||
+          k.contains('token') ||
+          k.contains('auth') ||
+          k.contains('key') ||
+          k.contains('secret') ||
+          k.contains('cookie')) {
         result[key] = '*** MASKED ***';
       } else {
         result[key] = value;
@@ -121,7 +142,15 @@ class ApiLogger {
       final maskedMap = <String, dynamic>{};
       body.forEach((key, value) {
         final keyStr = '$key';
-        if (sensitiveLower.contains(keyStr.toLowerCase())) {
+        final k = keyStr.toLowerCase();
+        if (sensitiveLower.contains(k) ||
+            k.contains('password') ||
+            k.contains('token') ||
+            k.contains('secret') ||
+            k.contains('card') ||
+            k.contains('key') ||
+            k.contains('cvv') ||
+            k.contains('auth')) {
           maskedMap[keyStr] = '*** MASKED ***';
         } else {
           maskedMap[keyStr] = _maskBody(value);

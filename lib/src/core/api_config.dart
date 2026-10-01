@@ -42,8 +42,11 @@ class ApiConfig {
   /// List of HTTP methods eligible for automated retry.
   final List<HttpMethod> retryOnMethods;
 
-  /// Whether terminal logging is enabled. Defaults to `true` in debug mode.
+  /// Whether terminal logging is enabled. Defaults to `true` in debug mode (`kDebugMode`).
   final bool enableLogging;
+
+  /// Explicit override to allow logs in production/release builds (default: false).
+  final bool allowProductionLogging;
 
   /// Verbosity level for terminal logs.
   final ApiLogLevel logLevel;
@@ -93,6 +96,7 @@ class ApiConfig {
       HttpMethod.options,
     ],
     bool? enableLogging,
+    this.allowProductionLogging = false,
     this.logLevel = ApiLogLevel.full,
     this.sensitiveHeaders = const [
       'authorization',
@@ -101,16 +105,28 @@ class ApiConfig {
       'x-api-key',
       'api-key',
       'secret',
+      'x-auth-token',
+      'bearer',
+      'access-token',
+      'token',
+      'x-app-key',
     ],
     this.sensitiveBodyKeys = const [
       'password',
       'pass',
+      'pwd',
       'token',
       'access_token',
       'refresh_token',
       'secret',
+      'api_key',
+      'key',
       'credit_card',
       'card_number',
+      'cvv',
+      'ssn',
+      'auth',
+      'private_key',
     ],
     this.multipartStrategy = MultipartFileStrategy.arraySuffix,
     this.followRedirects = true,
@@ -135,12 +151,16 @@ class ApiConfig {
     Duration? retryDelay,
     List<HttpMethod>? retryOnMethods,
     bool? enableLogging,
+    bool? allowProductionLogging,
     ApiLogLevel? logLevel,
     List<String>? sensitiveHeaders,
     List<String>? sensitiveBodyKeys,
     MultipartFileStrategy? multipartStrategy,
     bool? followRedirects,
     int? maxRedirects,
+    bool? enableCache,
+    Duration? defaultCacheDuration,
+    bool? checkOfflineFirst,
   }) {
     return ApiConfig(
       baseUrl: baseUrl ?? this.baseUrl,
@@ -156,12 +176,16 @@ class ApiConfig {
       retryDelay: retryDelay ?? this.retryDelay,
       retryOnMethods: retryOnMethods ?? this.retryOnMethods,
       enableLogging: enableLogging ?? this.enableLogging,
+      allowProductionLogging: allowProductionLogging ?? this.allowProductionLogging,
       logLevel: logLevel ?? this.logLevel,
       sensitiveHeaders: sensitiveHeaders ?? this.sensitiveHeaders,
       sensitiveBodyKeys: sensitiveBodyKeys ?? this.sensitiveBodyKeys,
       multipartStrategy: multipartStrategy ?? this.multipartStrategy,
       followRedirects: followRedirects ?? this.followRedirects,
       maxRedirects: maxRedirects ?? this.maxRedirects,
+      enableCache: enableCache ?? this.enableCache,
+      defaultCacheDuration: defaultCacheDuration ?? this.defaultCacheDuration,
+      checkOfflineFirst: checkOfflineFirst ?? this.checkOfflineFirst,
     );
   }
 }

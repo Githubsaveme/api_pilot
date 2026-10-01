@@ -50,6 +50,7 @@ class ApiClient {
   void _initLoggerAndRetry() {
     logger = ApiLogger(
       enabled: config.enableLogging,
+      allowProductionLogging: config.allowProductionLogging,
       logLevel: config.logLevel,
       sensitiveHeaders: config.sensitiveHeaders,
       sensitiveBodyKeys: config.sensitiveBodyKeys,

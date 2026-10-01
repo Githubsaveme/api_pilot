@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../enums/error_type.dart';
 
 /// Base exception class for all errors generated or handled by EasyApiKit.
@@ -339,7 +340,11 @@ class ParsingError extends ApiError {
     }
     if (rawData != null) {
       buffer.writeln('Raw Response:');
-      buffer.writeln('$rawData');
+      if (kReleaseMode) {
+        buffer.writeln('*** REDACTED IN PRODUCTION ***');
+      } else {
+        buffer.writeln('$rawData');
+      }
       buffer.writeln('');
     }
     buffer.writeln('Possible solutions:');
