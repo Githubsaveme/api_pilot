@@ -1,0 +1,25 @@
+name: easy_api_kit
+description: "A production-ready, easy-to-use Flutter & Dart API networking package with advanced error handling, logging, multipart uploads, and model parsing."
+version: 1.0.0
+homepage: https://github.com/Githubsaveme/api_pilot
+repository: https://github.com/Githubsaveme/api_pilot.git
+issue_tracker: https://github.com/Githubsaveme/api_pilot/issues
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.1
+  http_parser: ^4.1.0
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  test: ^1.25.0
+
+flutter:
